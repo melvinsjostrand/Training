@@ -7,7 +7,7 @@ import { useState } from "react";
 import NavBar from "./components/navBar";
 import Cart from "./components/cart";
 import Expand from "./components/expand";
-
+import Form from "./components/Form";
 function App() {
   const [game , setGame] = useState({
     id: 1,
@@ -47,10 +47,7 @@ function App() {
  }
   return (
     <div>
-      
-      <Expand>
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Nostrum, minus. Vel veritatis, quasi magnam ullam dolores fugiat quod impedit odit natus libero illum temporibus deleniti totam molestiae praesentium modi atque sit voluptate velit accusantium cumque labore quisquam quaerat tempore! Praesentium, laudantium vero obcaecati vitae sapiente error quia facilis minima aperiam dolor maiores a atque cupiditate natus aliquam magni. Mollitia eveniet quo facere iure id harum iste omnis eos! Id, illum magni quae natus soluta eos labore minus necessitatibus incidunt exercitationem adipisci. Impedit, quia quo suscipit quibusdam dolores dolorem recusandae nam ipsa voluptatum ratione quas harum laudantium eligendi corrupti praesentium rem.
-      </Expand>
+      <Form></Form>
     </div>
   );
 }
