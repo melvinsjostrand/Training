@@ -1,48 +1,85 @@
-import { useState } from "react";
-import ExpenseList from "./components/expense-tracker/components/ExpenseList";
-import ExpenseFilter from "./components/expense-tracker/components/ExpenseFilter";
-import ExpenseForm from "./components/expense-tracker/components/ExpenseForm";
-import categories from "./components/expense-tracker/categories";
+import { useEffect, useRef, useState } from "react";
+import ProductList from "./components/ProductList";
+import axios, { Axios, AxiosError, CanceledError } from "axios";
 
-
+interface User {
+  id: number;
+  name: string;
+}
 
 function App() {
-  const [expenses, setExpenses] = useState([
-    {
-      id: 1,
-      description: "111",
-      amount: 10,
-      category: " Utilities",
-    },
-    {
-      id: 2,
-      description: "111",
-      amount: 10,
-      category: " Utilities",
-    },
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [error, setError] = useState("");
+  const [isLoading, setLoading] = useState(false);
 
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const visibleExpenses = selectedCategory
-    ? expenses.filter((e) => e.category === selectedCategory)
-    : expenses;
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    axios
+      .get<User[]>("https://jsonplaceholder.typicode.com/users", {
+        signal: controller.signal,
+      })
+      .then((res) => {
+        setUsers(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (err instanceof CanceledError) return;
+        setLoading(false);
 
+        setError(err.message);
+      });
+    return () => controller.abort();
+  }, []);
+
+  const deleteUser = (user: User) => {
+    const originalUsers = [...users];
+    setUsers(users.filter((u) => u.id !== user.id));
+
+    axios
+      .delete("https://jsonplaceholder.typicode.com/users/" + user.id)
+      .catch((err) => {
+        setError(err.message);
+        setUsers(originalUsers);
+      });
+  };
+
+  const addUser = () => {
+    const newUser = { id: 0, name: "mebbe" };
+    setUsers([newUser, ...users]);
+    const originalUser = [...users]
+    axios
+      .post("https://jsonplaceholder.typicode.com/xusers", newUser)
+      .then(({data : savedUser}) => setUsers([savedUser, ...users]))
+      .catch(err => {
+        setError(err.message);
+        setUsers(originalUser);
+      });
+  };
   return (
-    <div>
-      <div className="mb-5">
-        <ExpenseForm onSubmit={expense => setExpenses([...expenses, {...expense, id: expenses.length + 1}])}></ExpenseForm>
-      </div>
-      <div className="mb-3">
-        <ExpenseFilter
-          onSelectCategory={(category) => setSelectedCategory(category)}
-        ></ExpenseFilter>
-      </div>
-
-      <ExpenseList
-        expenses={visibleExpenses}
-        onDelete={(id) => setExpenses(expenses.filter((e) => e.id !== id))}
-      />
-    </div>
+    <>
+      {error && <p className="text-danger">{error}</p>}
+      {isLoading && <div className="spinner-border"></div>}
+      <button className="btn btn-primary mb-3" onClick={addUser}>
+        Add
+      </button>
+      <ul className="list-group">
+        {users.map((user) => (
+          <li
+            className="list-group-item d-flex justify-content-between"
+            key={user.id}
+          >
+            {user.name}
+            <button
+              className="btn btn-outline-danger"
+              onClick={() => deleteUser(user)}
+            >
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
