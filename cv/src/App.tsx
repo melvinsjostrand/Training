@@ -1,57 +1,37 @@
-import { useEffect, useRef, useState } from "react";
-import ProductList from "./components/ProductList";
-import axios, { Axios, AxiosError, CanceledError } from "axios";
-
-interface User {
-  id: number;
-  name: string;
-}
+import { useEffect, useState } from "react";
+import { CanceledError } from "./components/services/api-client";
+import userService, { User } from "./components/services/user-Service";
+import useUsers from "./components/hooks/useUsers";
 
 function App() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [error, setError] = useState("");
-  const [isLoading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    axios
-      .get<User[]>("https://jsonplaceholder.typicode.com/users", {
-        signal: controller.signal,
-      })
-      .then((res) => {
-        setUsers(res.data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (err instanceof CanceledError) return;
-        setLoading(false);
-
-        setError(err.message);
-      });
-    return () => controller.abort();
-  }, []);
-
+  const { users, error, isLoading, setUsers, setError } = useUsers();
   const deleteUser = (user: User) => {
     const originalUsers = [...users];
     setUsers(users.filter((u) => u.id !== user.id));
 
-    axios
-      .delete("https://jsonplaceholder.typicode.com/users/" + user.id)
-      .catch((err) => {
-        setError(err.message);
-        setUsers(originalUsers);
-      });
+    userService.delete(user.id).catch((err) => {
+      setError(err.message);
+      setUsers(originalUsers);
+    });
   };
 
+  const updateUser = (user: User) => {
+    const updatedUser = { ...user, name: user.name + "!" };
+    setUsers(users.map((u) => (u.id === user.id ? updatedUser : u)));
+    const originalUser = [...users];
+    userService.update(updatedUser).catch((err) => {
+      setError(err.message);
+      setUsers(originalUser);
+    });
+  };
   const addUser = () => {
     const newUser = { id: 0, name: "mebbe" };
     setUsers([newUser, ...users]);
-    const originalUser = [...users]
-    axios
-      .post("https://jsonplaceholder.typicode.com/xusers", newUser)
-      .then(({data : savedUser}) => setUsers([savedUser, ...users]))
-      .catch(err => {
+    const originalUser = [...users];
+    userService
+      .create(newUser)
+      .then(({ data: savedUser }) => setUsers([savedUser, ...users]))
+      .catch((err) => {
         setError(err.message);
         setUsers(originalUser);
       });
@@ -70,15 +50,27 @@ function App() {
             key={user.id}
           >
             {user.name}
-            <button
-              className="btn btn-outline-danger"
-              onClick={() => deleteUser(user)}
-            >
-              Delete
-            </button>
+            <div>
+              <button
+                className="btn btn-outline-secondary mx-1"
+                onClick={() => updateUser(user)}
+              >
+                Update
+              </button>
+              <button
+                className="btn btn-outline-danger"
+                onClick={() => deleteUser(user)}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
+      <select name="" id="">
+        <option value="">22</option>
+        <option value="">333</option>
+      </select>
     </>
   );
 }
